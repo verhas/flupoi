@@ -28,7 +28,7 @@ public class TestWorkbook extends TestCase {
 	}
 
 	@Test
-	public void testWorkbook() throws InvalidFormatException,
+	public void testAlphaRange() throws InvalidFormatException,
 			InstantiationException, IllegalAccessException,
 			NoSuchFieldException, SecurityException, IOException {
 		InputStream is = getClass().getClassLoader().getResourceAsStream(
@@ -36,6 +36,21 @@ public class TestWorkbook extends TestCase {
 		@SuppressWarnings("unchecked")
 		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
 				.getWorkbook().stream(is).sheet("Sheet1").range("A1:C3").down()
+				.names("fruit,animal,travel").target("one", Animal.class)
+				.execute().fetch("one");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+	}
+	@Test
+	public void testNumRange() throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+		InputStream is = getClass().getClassLoader().getResourceAsStream(
+				"test1.xlsx");
+		@SuppressWarnings("unchecked")
+		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
+				.getWorkbook().stream(is).sheet("Sheet1").range("(0,0):(2,2)").down()
 				.names("fruit,animal,travel").target("one", Animal.class)
 				.execute().fetch("one");
 		for (Animal animal : animales) {

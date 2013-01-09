@@ -1,34 +1,88 @@
 package javax0.flupoi;
 
 class Point {
-	private int x;
-	private boolean xDef = false;
-	private int y;
-	private boolean yDef = false;
+	static class Coordinate {
+		private int value;
+		private boolean defined = false;
+		private int relativity = 0;
 
-	public int getX() {
+		public int getValue() {
+			return value;
+		}
+
+		public void setValue(int value) {
+			this.value = value;
+			this.defined = true;
+		}
+
+		public boolean isDefined() {
+			return defined;
+		}
+
+		public void setDefined(boolean defined) {
+			this.defined = defined;
+		}
+
+		public int getRelativity() {
+			return relativity;
+		}
+
+		public void setRelativity(char sig) {
+			relativity = sig == '+' ? 1 : (sig == '-' ? -1 : 0);
+		}
+		public boolean isRelative(){
+			return relativity != 0;
+		}
+	}
+
+	final private Coordinate x = new Coordinate();
+	final private Coordinate y = new Coordinate();
+
+	public Coordinate getX() {
 		return x;
 	}
 
-	public void setX(int x) {
-		this.x = x;
-		xDef = true;
-	}
-
-	public int getY() {
+	public Coordinate getY() {
 		return y;
 	}
 
-	public void setY(int y) {
-		this.y = y;
-		yDef = true;
+	protected int getXValue() {
+		return x.value;
 	}
 
-	public boolean xDefined() {
-		return xDef;
+	protected void setXValue(int x) {
+		this.x.setValue(x);
 	}
 
-	public boolean yDefined() {
-		return yDef;
+	protected int getYValue() {
+		return y.value;
+	}
+
+	protected void setYValue(int y) {
+		this.y.setValue(y);
+	}
+
+	protected void setXR(char sig) {
+		this.x.setRelativity(sig);
+	}
+
+	protected void setYR(char sig) {
+		this.y.setRelativity(sig);
+	}
+
+	protected boolean xRelative() {
+		return this.x.isRelative();
+	}
+
+	protected boolean yRelative() {
+		return this.y.isRelative();
+	}
+
+	protected boolean xDefined() {
+		return this.x.defined;
+	}
+
+	protected boolean yDefined() {
+		return this.y.defined;
 	}
 }

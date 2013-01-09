@@ -22,16 +22,16 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 	public Iterator<Collection<Cell>> iterator() {
 		switch (processor.getRange().getDirection()) {
 		case RIGHT:
-			setPosition(processor.getRange().getStart().getX());
+			setPosition(processor.getRange().getStart().getXValue());
 			break;
 		case LEFT:
-			setPosition(processor.getRange().getEnd().getX());
+			setPosition(processor.getRange().getEnd().getXValue());
 			break;
 		case DOWN:
-			setPosition(processor.getRange().getStart().getY());
+			setPosition(processor.getRange().getStart().getYValue());
 			break;
 		case UP:
-			setPosition(processor.getRange().getEnd().getY());
+			setPosition(processor.getRange().getEnd().getYValue());
 			break;
 		}
 		return this;
@@ -74,11 +74,11 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 		int start = 0;
 		int end = 0;
 		if (isVerticalRange()) {
-			start = processor.getRange().getStart().getY();
-			end = processor.getRange().getEnd().getY();
+			start = processor.getRange().getStart().getYValue();
+			end = processor.getRange().getEnd().getYValue();
 		} else {
-			start = processor.getRange().getStart().getX();
-			end = processor.getRange().getEnd().getX();
+			start = processor.getRange().getStart().getXValue();
+			end = processor.getRange().getEnd().getXValue();
 		}
 		for (int i = start; (isForwardRange() ? i <= end : i >= end); i = isForwardRange() ? i + 1
 				: i - 1) {
@@ -104,12 +104,12 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 			collectCells();
 			stopNow = cells == null ? true
 					: (processor.getCondition() == null ? (isVerticalRange() ? position > processor
-							.getRange().getEnd().getX()
+							.getRange().getEnd().getXValue()
 							|| position < processor.getRange().getStart()
-									.getX()
-							: position > processor.getRange().getEnd().getY()
+									.getXValue()
+							: position > processor.getRange().getEnd().getYValue()
 									|| position < processor.getRange()
-											.getStart().getY())
+											.getStart().getYValue())
 							: processor.getCondition().match(cells));
 		}
 		return !stopNow;

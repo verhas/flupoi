@@ -17,7 +17,7 @@ public class Processor {
 
 	protected Processor(String range, String sheetName,
 			ProcessState processState) {
-		this.range = new Range(range);
+		this.range = new RangeBuilder(range).build();
 		this.setSheetName(sheetName);
 		this.setProcessState(processState);
 	}
