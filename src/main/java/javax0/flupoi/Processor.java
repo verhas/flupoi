@@ -31,7 +31,7 @@ public class Processor {
 	public Range getRange() {
 		return range;
 	}
-	
+
 	public Condition getCondition() {
 		return condition;
 	}
@@ -83,8 +83,10 @@ public class Processor {
 		Object target = targetType.newInstance();
 		int i = 0;
 		for (Cell cell : cells) {
-			String name = names[i++];
-			storeCell(target, name, cell.getStringCellValue());
+			final String name = i < names.length ? names[i++] : null;
+			if (name != null && !"-".equals(name)) {
+				storeCell(target, name, cell.getStringCellValue());
+			}
 		}
 		return target;
 	}

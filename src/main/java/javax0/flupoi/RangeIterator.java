@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
 
 class RangeIterator implements Iterable<Collection<Cell>>,
 		Iterator<Collection<Cell>> {
@@ -20,39 +21,41 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 
 	@Override
 	public Iterator<Collection<Cell>> iterator() {
+		final Point basePoint = processor.getProcessState()
+				.getLastProcessedPosition();
+		processor.getRange().absolutize(basePoint);
 		switch (processor.getRange().getDirection()) {
 		case RIGHT:
-			setPosition(processor.getRange().getStart().getXValue());
+			setPosition(processor.getRange().getStart().getX().getValue());
 			break;
 		case LEFT:
-			setPosition(processor.getRange().getEnd().getXValue());
+			setPosition(processor.getRange().getEnd().getX().getValue());
 			break;
 		case DOWN:
-			setPosition(processor.getRange().getStart().getYValue());
+			setPosition(processor.getRange().getStart().getY().getValue());
 			break;
 		case UP:
-			setPosition(processor.getRange().getEnd().getYValue());
+			setPosition(processor.getRange().getEnd().getY().getValue());
 			break;
 		}
 		return this;
 	}
 
-	private void stepPosition() {
-		switch (processor.getRange().getDirection()) {
-		case RIGHT:
-			position++;
-			break;
-		case LEFT:
-			position--;
-			break;
-		case UP:
-			position--;
-			break;
-		case DOWN:
-			position++;
-			break;
+	private Coordinate getPositionCoordinate() {
+		final Point point = processor.getProcessState().getPositionPoint();
+		final Coordinate cord;
+		if (isVerticalRange()) {
+			cord = point.getY();
+		} else {
+			cord = point.getX();
 		}
+		return cord;
+	}
 
+	private void stepPosition() {
+		final Coordinate cord = getPositionCoordinate();
+		processor.getProcessState().saveLastProcessedPosition();
+		cord.setValue(cord.getValue() + (isForwardRange() ? 1 : -1));
 	}
 
 	private Collection<Cell> cells = null;
@@ -64,53 +67,89 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 	}
 
 	private boolean isVerticalRange() {
-		RangeDirection direction = processor.getRange().getDirection();
-		return direction == RangeDirection.RIGHT
-				|| direction == RangeDirection.LEFT;
+		return processor.getRange().isVertical();
+	}
+
+	private Sheet sheet = null;
+
+	private boolean stillInTheRow(int i, int end) {
+		return isForwardRange() ? i <= end : i >= end;
+	}
+
+	private int stepIncrement() {
+		return isForwardRange() ? +1 : -1;
 	}
 
 	private void collectCells() {
-		cells = new LinkedList<Cell>();
-		int start = 0;
-		int end = 0;
-		if (isVerticalRange()) {
-			start = processor.getRange().getStart().getYValue();
-			end = processor.getRange().getEnd().getYValue();
-		} else {
-			start = processor.getRange().getStart().getXValue();
-			end = processor.getRange().getEnd().getXValue();
-		}
-		for (int i = start; (isForwardRange() ? i <= end : i >= end); i = isForwardRange() ? i + 1
-				: i - 1) {
-			try {
-				cells.add(processor.getProcessState()
-						.getSheet(processor.getSheetName())
-						.getRow(isVerticalRange() ? i : position)
-						.getCell(isVerticalRange() ? position : i));
-			} catch (NullPointerException | InvalidFormatException
-					| IOException e) {
-				cells = null;
-				return;
+		if (getPosition() >= 0) {
+			cells = new LinkedList<Cell>();
+			int start = 0;
+			int end = 0;
+			final Range range = processor.getRange();
+			final Point startPoint = range.getStart();
+			final Point endPoint = range.getEnd();
+			final Coordinate startCord;
+			final Coordinate endCord;
+			if (isVerticalRange()) {
+				startCord = startPoint.getX();
+				endCord = endPoint.getX();
+			} else {
+				startCord = startPoint.getY();
+				endCord = endPoint.getY();
 			}
-		}
+			start = startCord.getValue();
+			end = endCord.getValue();
+			for (int i = start; stillInTheRow(i, end); i += stepIncrement()) {
+				try {
+					if (sheet == null) {
+						sheet = processor.getProcessState().getSheet(
+								processor.getSheetName());
+					}
+					final int colNum = isVerticalRange() ? i : getPosition();
+					final int rowNum = isVerticalRange() ? getPosition() : i;
+					cells.add(sheet.getRow(rowNum).getCell(colNum));
+				} catch (NullPointerException | InvalidFormatException
+						| IOException e) {
+					cells = null;
+					return;
+				}
+			}
 
+		} else {
+			cells = null;
+		}
 	}
 
 	private boolean stopNow;
 
+	private boolean calculateStopOnRange() {
+		final Range range = processor.getRange();
+		final Point startPoint = range.getStart();
+		final Point endPoint = range.getEnd();
+		final int start, end;
+		if (isVerticalRange()) {
+			start = startPoint.getY().getValue();
+			end = endPoint.getY().getValue();
+		} else {
+			start = startPoint.getX().getValue();
+			end = endPoint.getX().getValue();
+		}
+		return getPosition() > end || getPosition() < start;
+	}
+
+	private boolean calculateStopCondition() {
+		return cells == null ? true : processor.getCondition().match(cells);
+	}
+
 	@Override
 	public boolean hasNext() {
-		if (cells == null) {
-			collectCells();
-			stopNow = cells == null ? true
-					: (processor.getCondition() == null ? (isVerticalRange() ? position > processor
-							.getRange().getEnd().getXValue()
-							|| position < processor.getRange().getStart()
-									.getXValue()
-							: position > processor.getRange().getEnd().getYValue()
-									|| position < processor.getRange()
-											.getStart().getYValue())
-							: processor.getCondition().match(cells));
+		if (processor.getCondition() == null) {
+			stopNow = calculateStopOnRange();
+		} else {
+			if (cells == null) {
+				collectCells();
+				stopNow = calculateStopCondition();
+			}
 		}
 		return !stopNow;
 	}
@@ -120,32 +159,29 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 		if (cells == null) {
 			collectCells();
 		}
-		final Collection<Cell> newCells;
+		final Collection<Cell> nextCells;
 		if (hasNext()) {
-
-			newCells = cells;
+			nextCells = cells;
 			cells = null;
 			stepPosition();
 		} else {
-			newCells = null;
+			nextCells = null;
 		}
-		return newCells;
+		return nextCells;
 	}
 
 	@Override
 	public void remove() {
 		throw new NotImplementedException(
 				"remove() is not implemented in RangeIterator");
-
 	}
 
 	public int getPosition() {
-		return position;
+		return getPositionCoordinate().getValue();
 	}
 
-	public void setPosition(final int position) {
-		this.position = position;
+	protected void setPosition(final int position) {
+		getPositionCoordinate().setValue(position);
 	}
 
-	private int position;
 }

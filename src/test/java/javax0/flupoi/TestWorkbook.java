@@ -27,21 +27,103 @@ public class TestWorkbook extends TestCase {
 		}
 	}
 
+	private Workbook getSheet() {
+		InputStream is = getClass().getClassLoader().getResourceAsStream(
+				"test1.xlsx");
+		return FluentWorkbookFactory.getWorkbook().stream(is).sheet("Sheet1");
+	}
+
 	@Test
-	public void testAlphaRange() throws InvalidFormatException,
+	@SuppressWarnings("unchecked")
+	public void testAlphaRangeDownPieces() throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+
+		Workbook wb = getSheet().range("A1:C2").down()
+				.names("fruit,animal,travel").target("one", Animal.class)
+				.range("(+0,+1):(+2,+0)").down().names("fruit,animal,travel")
+				.target("two", Animal.class).execute();
+		Collection<Animal> animales = (Collection<Animal>) wb.fetch("one");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+		animales = (Collection<Animal>) (Collection<Animal>) wb.fetch("two");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+	}
+
+	private Workbook testExec(Workbook wb) throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+		return wb.names("fruit,animal,travel").target("one", Animal.class)
+				.execute();
+	}
+
+	private Workbook getRange() {
+		return getSheet().range("A1:C3");
+	}
+
+	@Test
+	public void testAlphaRangeDown() throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+		@SuppressWarnings("unchecked")
+		Collection<Animal> animales = (Collection<Animal>) testExec(
+				getRange().down()).fetch("one");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+	}
+
+	@Test
+	public void testAlphaRangeUp() throws InvalidFormatException,
 			InstantiationException, IllegalAccessException,
 			NoSuchFieldException, SecurityException, IOException {
 		InputStream is = getClass().getClassLoader().getResourceAsStream(
 				"test1.xlsx");
 		@SuppressWarnings("unchecked")
 		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
-				.getWorkbook().stream(is).sheet("Sheet1").range("A1:C3").down()
+				.getWorkbook().stream(is).sheet("Sheet1").range("A3:C1").up()
 				.names("fruit,animal,travel").target("one", Animal.class)
 				.execute().fetch("one");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
 	}
+
+	@Test
+	public void testAlphaRangeLeft() throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+		InputStream is = getClass().getClassLoader().getResourceAsStream(
+				"test1.xlsx");
+		@SuppressWarnings("unchecked")
+		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
+				.getWorkbook().stream(is).sheet("Sheet1").range("C3:A1").left()
+				.names("fruit,animal,travel").target("one", Animal.class)
+				.execute().fetch("one");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+	}
+
+	@Test
+	public void testAlphaRangeRight() throws InvalidFormatException,
+			InstantiationException, IllegalAccessException,
+			NoSuchFieldException, SecurityException, IOException {
+		InputStream is = getClass().getClassLoader().getResourceAsStream(
+				"test1.xlsx");
+		@SuppressWarnings("unchecked")
+		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
+				.getWorkbook().stream(is).sheet("Sheet1").range("A1:C3")
+				.right().names("fruit,animal,travel")
+				.target("one", Animal.class).execute().fetch("one");
+		for (Animal animal : animales) {
+			System.out.println(animal);
+		}
+	}
+
 	@Test
 	public void testNumRange() throws InvalidFormatException,
 			InstantiationException, IllegalAccessException,
@@ -50,9 +132,9 @@ public class TestWorkbook extends TestCase {
 				"test1.xlsx");
 		@SuppressWarnings("unchecked")
 		Collection<Animal> animales = (Collection<Animal>) FluentWorkbookFactory
-				.getWorkbook().stream(is).sheet("Sheet1").range("(0,0):(2,2)").down()
-				.names("fruit,animal,travel").target("one", Animal.class)
-				.execute().fetch("one");
+				.getWorkbook().stream(is).sheet("Sheet1").range("(0,0):(2,2)")
+				.down().names("fruit,animal,travel")
+				.target("one", Animal.class).execute().fetch("one");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}

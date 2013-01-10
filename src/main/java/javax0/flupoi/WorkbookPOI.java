@@ -17,7 +17,7 @@ public class WorkbookPOI implements Workbook {
 	private ProcessState processState = new ProcessState();
 	private InputStream is;
 	private Deque<Processor> processorStack = new LinkedList<>();
-
+private Processor lastAddedProcessor;
 	@Override
 	public Workbook stream(InputStream is) {
 		this.is = is;
@@ -34,49 +34,50 @@ public class WorkbookPOI implements Workbook {
 
 	@Override
 	public Workbook range(String range) {
-		processorStack.push(new Processor(range, sheetName, processState));
+		lastAddedProcessor = new Processor(range, sheetName, processState);
+		processorStack.add(lastAddedProcessor);
 		return this;
 	}
 
 	@Override
 	public Workbook up() {
-		processorStack.peek().setDirection(RangeDirection.UP);
+		lastAddedProcessor.setDirection(RangeDirection.UP);
 		return this;
 	}
 
 	@Override
 	public Workbook down() {
-		processorStack.peek().setDirection(RangeDirection.DOWN);
+		lastAddedProcessor.setDirection(RangeDirection.DOWN);
 		return this;
 	}
 
 	@Override
 	public Workbook left() {
-		processorStack.peek().setDirection(RangeDirection.LEFT);
+		lastAddedProcessor.setDirection(RangeDirection.LEFT);
 		return this;
 	}
 
 	@Override
 	public Workbook right() {
-		processorStack.peek().setDirection(RangeDirection.RIGHT);
+		lastAddedProcessor.setDirection(RangeDirection.RIGHT);
 		return this;
 	}
 
 	@Override
 	public Workbook until(Condition condition) {
-		processorStack.peek().setCondition(condition);
+		lastAddedProcessor.setCondition(condition);
 		return this;
 	}
 
 	@Override
 	public Workbook until(String match) {
-		processorStack.peek().setCondition(new StringMatcherCondition(match));
+		lastAddedProcessor.setCondition(new StringMatcherCondition(match));
 		return this;
 	}
 
 	@Override
 	public Workbook untilEmptyLine() {
-		processorStack.peek().setCondition(new EmptyLineMatcherCondition());
+		lastAddedProcessor.setCondition(new EmptyLineMatcherCondition());
 		return this;
 	}
 
@@ -87,7 +88,7 @@ public class WorkbookPOI implements Workbook {
 
 	@Override
 	public Workbook names(String[] names) {
-		processorStack.peek().setNames(names);
+		lastAddedProcessor.setNames(names);
 		return this;
 	}
 
@@ -106,8 +107,8 @@ public class WorkbookPOI implements Workbook {
 
 	@Override
 	public Workbook target(Object key, Class<?> type) {
-		processorMap.put(key, processorStack.peek());
-		processorStack.peek().setTargetType(type);
+		processorMap.put(key, lastAddedProcessor);
+		lastAddedProcessor.setTargetType(type);
 		return this;
 	}
 
@@ -125,7 +126,9 @@ public class WorkbookPOI implements Workbook {
 	public Workbook execute() throws InvalidFormatException, IOException,
 			InstantiationException, IllegalAccessException,
 			NoSuchFieldException, SecurityException {
+		processState.resetPositionPoint();
 		processState.setIs(is);
+
 		for (Processor processor : processorStack) {
 			processor.execute();
 		}
@@ -134,7 +137,8 @@ public class WorkbookPOI implements Workbook {
 
 	@Override
 	public Collection<?> fetch(Object key) {
-		return processorMap.get(key).getTargetCollection();
+		Processor p = processorMap.get(key);
+		return p == null ? null : p.getTargetCollection();
 	}
 
 }

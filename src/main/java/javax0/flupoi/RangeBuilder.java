@@ -112,14 +112,13 @@ public class RangeBuilder {
 		if (firstCharacterIsJoker(sb)) {
 			dropCharacter(sb);
 		} else {
-			point.setXR(fetchSignumCharacter(sb));
+			point.getX().setRelativity(fetchSignumCharacter(sb));
 			final int x = convertAlpha(sb);
-			point.setXValue(x);
+			point.getX().setValue(x);
 		}
 	}
 
-	private void convertNumericOrJoker(StringBuilder sb,
-			Point.Coordinate coordinate) {
+	private void convertNumericOrJoker(StringBuilder sb, Coordinate coordinate) {
 		if (firstCharacterIsJoker(sb)) {
 			dropCharacter(sb);
 		} else {
@@ -136,8 +135,8 @@ public class RangeBuilder {
 	 *            to correct
 	 */
 	private void correctYCoordinateForIndexing(Point point) {
-		if (point.yDefined()) {
-			point.setYValue(point.getYValue() - 1);
+		if (point.getY().isDefined()) {
+			point.getY().setValue(point.getY().getValue() - 1);
 		}
 	}
 
@@ -167,19 +166,19 @@ public class RangeBuilder {
 	private RangeDirection calculateDirection() {
 		RangeDirection dir = null;
 		int joker = 0;
-		if (!range.getStart().xDefined()) {
+		if (!range.getStart().getX().isDefined()) {
 			dir = RangeDirection.LEFT;
 			joker++;
 		}
-		if (!range.getStart().yDefined()) {
+		if (!range.getStart().getY().isDefined()) {
 			dir = RangeDirection.UP;
 			joker++;
 		}
-		if (!range.getEnd().xDefined()) {
+		if (!range.getEnd().getX().isDefined()) {
 			dir = RangeDirection.RIGHT;
 			joker++;
 		}
-		if (!range.getEnd().yDefined()) {
+		if (!range.getEnd().getY().isDefined()) {
 			dir = RangeDirection.DOWN;
 			joker++;
 		}

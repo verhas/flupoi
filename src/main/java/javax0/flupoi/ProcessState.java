@@ -29,6 +29,7 @@ class ProcessState {
 		Workbook workbook = getWorkbook();
 		return workbook.getSheet(name);
 	}
+
 	public RangeIterator getRangeIterator() {
 		return rangeIterator;
 	}
@@ -38,4 +39,28 @@ class ProcessState {
 	}
 
 	private RangeIterator rangeIterator;
+
+	private Point lastProcessedPosition = new Point(0,0);
+
+	public Point getLastProcessedPosition() {
+		return lastProcessedPosition;
+	}
+
+	public void saveLastProcessedPosition() {
+		lastProcessedPosition.getX().setValue(positionPoint.getX().getValue());
+		lastProcessedPosition.getY().setValue(positionPoint.getY().getValue());
+	}
+
+	private Point positionPoint = new Point();
+
+	protected void resetPositionPoint() {
+		positionPoint.getX().setValue(0);
+		positionPoint.getY().setValue(0);
+		saveLastProcessedPosition();
+	}
+
+	protected Point getPositionPoint() {
+		return positionPoint;
+	}
+
 }
