@@ -24,18 +24,30 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 		final Point basePoint = processor.getProcessState()
 				.getLastProcessedPosition();
 		processor.getRange().absolutize(basePoint);
+		calculateLimits();
+		Point startPoint = processor.getRange().getStart();
+		Point endPoint = processor.getRange().getEnd();
+		final int a, b;
 		switch (processor.getRange().getDirection()) {
 		case RIGHT:
-			setPosition(processor.getRange().getStart().getX().getValue());
+			a = startPoint.getX().getValue();
+			b = endPoint.getX().getValue();
+			setPosition(Math.min(a, b));
 			break;
 		case LEFT:
-			setPosition(processor.getRange().getEnd().getX().getValue());
+			a = startPoint.getX().getValue();
+			b = endPoint.getX().getValue();
+			setPosition(Math.max(a, b));
 			break;
 		case DOWN:
-			setPosition(processor.getRange().getStart().getY().getValue());
+			a = startPoint.getY().getValue();
+			b = endPoint.getY().getValue();
+			setPosition(Math.min(a, b));
 			break;
 		case UP:
-			setPosition(processor.getRange().getEnd().getY().getValue());
+			a = startPoint.getY().getValue();
+			b = endPoint.getY().getValue();
+			setPosition(Math.max(a, b));
 			break;
 		}
 		return this;
@@ -72,42 +84,55 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 
 	private Sheet sheet = null;
 
-	private boolean stillInTheRow(int i, int end) {
-		return isForwardRange() ? i <= end : i >= end;
+	private Sheet getSheet() throws InvalidFormatException, IOException {
+		if (sheet == null) {
+			sheet = processor.getProcessState().getSheet(
+					processor.getSheetName());
+		}
+		return sheet;
 	}
 
-	private int stepIncrement() {
-		return isForwardRange() ? +1 : -1;
+	private int startInner = 0;
+	private int endInner = 0;
+	private int startOuter = 0;
+	private int endOuter = 0;
+
+	private void calculateLimits() {
+		final Range range = processor.getRange();
+		final Point startPoint = range.getStart();
+		final Point endPoint = range.getEnd();
+		final Coordinate startCord;
+		final Coordinate endCord;
+		if (isVerticalRange()) {
+			startCord = startPoint.getX();
+			endCord = endPoint.getX();
+		} else {
+			startCord = startPoint.getY();
+			endCord = endPoint.getY();
+		}
+		final int a = startCord.getValue();
+		final int b = endCord.getValue();
+		startInner = Math.min(a, b);
+		endInner = Math.max(a, b);
+
+		if (isVerticalRange()) {
+			startOuter = startPoint.getY().getValue();
+			endOuter = endPoint.getY().getValue();
+		} else {
+			startOuter = startPoint.getX().getValue();
+			endOuter = endPoint.getX().getValue();
+		}
+
 	}
 
 	private void collectCells() {
 		if (getPosition() >= 0) {
 			cells = new LinkedList<Cell>();
-			int start = 0;
-			int end = 0;
-			final Range range = processor.getRange();
-			final Point startPoint = range.getStart();
-			final Point endPoint = range.getEnd();
-			final Coordinate startCord;
-			final Coordinate endCord;
-			if (isVerticalRange()) {
-				startCord = startPoint.getX();
-				endCord = endPoint.getX();
-			} else {
-				startCord = startPoint.getY();
-				endCord = endPoint.getY();
-			}
-			start = startCord.getValue();
-			end = endCord.getValue();
-			for (int i = start; stillInTheRow(i, end); i += stepIncrement()) {
+			for (int i = startInner; i <= endInner; i++) {
 				try {
-					if (sheet == null) {
-						sheet = processor.getProcessState().getSheet(
-								processor.getSheetName());
-					}
 					final int colNum = isVerticalRange() ? i : getPosition();
 					final int rowNum = isVerticalRange() ? getPosition() : i;
-					cells.add(sheet.getRow(rowNum).getCell(colNum));
+					cells.add(getSheet().getRow(rowNum).getCell(colNum));
 				} catch (NullPointerException | InvalidFormatException
 						| IOException e) {
 					cells = null;
@@ -122,19 +147,17 @@ class RangeIterator implements Iterable<Collection<Cell>>,
 
 	private boolean stopNow;
 
-	private boolean calculateStopOnRange() {
-		final Range range = processor.getRange();
-		final Point startPoint = range.getStart();
-		final Point endPoint = range.getEnd();
-		final int start, end;
-		if (isVerticalRange()) {
-			start = startPoint.getY().getValue();
-			end = endPoint.getY().getValue();
-		} else {
-			start = startPoint.getX().getValue();
-			end = endPoint.getX().getValue();
+	private boolean isInInterval(int a, int b, int x) {
+		if (a > b) {
+			int swap = a;
+			a = b;
+			b = swap;
 		}
-		return getPosition() > end || getPosition() < start;
+		return a <= x && x <= b;
+	}
+
+	private boolean calculateStopOnRange() {
+		return !isInInterval(startOuter, endOuter, getPosition());
 	}
 
 	private boolean calculateStopCondition() {

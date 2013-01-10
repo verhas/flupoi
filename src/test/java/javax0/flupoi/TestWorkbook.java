@@ -71,6 +71,7 @@ public class TestWorkbook extends TestCase {
 		@SuppressWarnings("unchecked")
 		Collection<Animal> animales = (Collection<Animal>) testExec(
 				getRange().down()).fetch("one");
+		System.out.println("down");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
@@ -87,6 +88,7 @@ public class TestWorkbook extends TestCase {
 				.getWorkbook().stream(is).sheet("Sheet1").range("A3:C1").up()
 				.names("fruit,animal,travel").target("one", Animal.class)
 				.execute().fetch("one");
+		System.out.println("up");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
@@ -103,6 +105,7 @@ public class TestWorkbook extends TestCase {
 				.getWorkbook().stream(is).sheet("Sheet1").range("C3:A1").left()
 				.names("fruit,animal,travel").target("one", Animal.class)
 				.execute().fetch("one");
+		System.out.println("left");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
@@ -119,6 +122,7 @@ public class TestWorkbook extends TestCase {
 				.getWorkbook().stream(is).sheet("Sheet1").range("A1:C3")
 				.right().names("fruit,animal,travel")
 				.target("one", Animal.class).execute().fetch("one");
+		System.out.println("right");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
@@ -135,6 +139,7 @@ public class TestWorkbook extends TestCase {
 				.getWorkbook().stream(is).sheet("Sheet1").range("(0,0):(2,2)")
 				.down().names("fruit,animal,travel")
 				.target("one", Animal.class).execute().fetch("one");
+		System.out.println("num");
 		for (Animal animal : animales) {
 			System.out.println(animal);
 		}
