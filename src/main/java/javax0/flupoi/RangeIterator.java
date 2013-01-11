@@ -13,9 +13,9 @@ import org.apache.poi.ss.usermodel.Sheet;
 class RangeIterator implements Iterable<Collection<Cell>>,
 		Iterator<Collection<Cell>> {
 
-	Processor processor;
+	RangeProcessor processor;
 
-	protected RangeIterator(final Processor processor) {
+	protected RangeIterator(final RangeProcessor processor) {
 		this.processor = processor;
 	}
 

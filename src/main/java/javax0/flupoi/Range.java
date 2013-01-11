@@ -23,12 +23,15 @@ class Range {
 	protected RangeDirection direction;
 
 	protected RangeDirection getDirection() {
+		if( direction == null ){
+			direction = RangeDirection.DOWN;
+		}
 		return direction;
 	}
 
 	protected boolean isVertical() {
-		return direction == RangeDirection.UP
-				|| direction == RangeDirection.DOWN;
+		return getDirection() == RangeDirection.UP
+				|| getDirection() == RangeDirection.DOWN;
 	}
 
 	protected void setDirection(RangeDirection direction) {
@@ -38,10 +41,10 @@ class Range {
 	protected Range() {
 	}
 
-	private void absolutize(Coordinate coord, Coordinate baseCoordinate) {
+	private void absolutize(Coordinate coord, Coordinate baseCoordinate, int correction) {
 		if (coord.isDefined() && coord.isRelative()) {
 			coord.setValue(coord.getValue() * coord.getRelativity()
-					+ baseCoordinate.getValue());
+					+ baseCoordinate.getValue()+correction);
 			coord.resetRelativity();
 		}
 	}
@@ -55,9 +58,9 @@ class Range {
 	 *            to be absolute.
 	 */
 	protected void absolutize(Point basePoint) {
-		absolutize(start.getX(), basePoint.getX());
-		absolutize(start.getY(), basePoint.getY());
-		absolutize(end.getX(), start.getX());
-		absolutize(end.getY(), start.getY());
+		absolutize(start.getX(), basePoint.getX(),0);
+		absolutize(start.getY(), basePoint.getY(),0);
+		absolutize(end.getX(), start.getX(),-1);
+		absolutize(end.getY(), start.getY(),-1);
 	}
 }

@@ -17,7 +17,8 @@ public class WorkbookPOI implements Workbook {
 	private ProcessState processState = new ProcessState();
 	private InputStream is;
 	private Deque<Processor> processorStack = new LinkedList<>();
-private Processor lastAddedProcessor;
+	private RangeProcessor lastAddedRangeProcessor;
+
 	@Override
 	public Workbook stream(InputStream is) {
 		this.is = is;
@@ -34,61 +35,62 @@ private Processor lastAddedProcessor;
 
 	@Override
 	public Workbook range(String range) {
-		lastAddedProcessor = new Processor(range, sheetName, processState);
-		processorStack.add(lastAddedProcessor);
+		lastAddedRangeProcessor = new RangeProcessor(range, sheetName, processState);
+		processorStack.add(lastAddedRangeProcessor);
 		return this;
 	}
 
 	@Override
 	public Workbook up() {
-		lastAddedProcessor.setDirection(RangeDirection.UP);
+		lastAddedRangeProcessor.setDirection(RangeDirection.UP);
 		return this;
 	}
 
 	@Override
 	public Workbook down() {
-		lastAddedProcessor.setDirection(RangeDirection.DOWN);
+		lastAddedRangeProcessor.setDirection(RangeDirection.DOWN);
 		return this;
 	}
 
 	@Override
 	public Workbook left() {
-		lastAddedProcessor.setDirection(RangeDirection.LEFT);
+		lastAddedRangeProcessor.setDirection(RangeDirection.LEFT);
 		return this;
 	}
 
 	@Override
 	public Workbook right() {
-		lastAddedProcessor.setDirection(RangeDirection.RIGHT);
+		lastAddedRangeProcessor.setDirection(RangeDirection.RIGHT);
 		return this;
 	}
 
 	@Override
 	public Workbook until(Condition condition) {
-		lastAddedProcessor.setCondition(condition);
+		lastAddedRangeProcessor.setCondition(condition);
 		return this;
 	}
 
 	@Override
 	public Workbook until(String match) {
-		lastAddedProcessor.setCondition(new StringMatcherCondition(match));
+		lastAddedRangeProcessor.setCondition(new StringMatcherCondition(match));
 		return this;
 	}
 
 	@Override
 	public Workbook untilEmptyLine() {
-		lastAddedProcessor.setCondition(new EmptyLineMatcherCondition());
+		lastAddedRangeProcessor.setCondition(new EmptyLineMatcherCondition());
 		return this;
 	}
 
 	@Override
 	public Workbook untilEmptyCell() {
-		throw new NotImplementedException("");
+		lastAddedRangeProcessor.setCondition(new EmptyCellMatcherCondition());
+		return this;
 	}
 
 	@Override
 	public Workbook names(String[] names) {
-		lastAddedProcessor.setNames(names);
+		lastAddedRangeProcessor.setNames(names);
 		return this;
 	}
 
@@ -103,17 +105,18 @@ private Processor lastAddedProcessor;
 		return this;
 	}
 
-	private Map<Object, Processor> processorMap = new HashMap<>();
+	private Map<Object, RangeProcessor> processorMap = new HashMap<>();
 
 	@Override
 	public Workbook target(Object key, Class<?> type) {
-		processorMap.put(key, lastAddedProcessor);
-		lastAddedProcessor.setTargetType(type);
+		processorMap.put(key, lastAddedRangeProcessor);
+		lastAddedRangeProcessor.setTargetType(type);
 		return this;
 	}
 
 	@Override
-	public Workbook skip() {
+	public Workbook skip(int x, int y) {
+		processorStack.add(new SkipProcessor(x, y, processState));
 		return this;
 	}
 
@@ -137,7 +140,7 @@ private Processor lastAddedProcessor;
 
 	@Override
 	public Collection<?> fetch(Object key) {
-		Processor p = processorMap.get(key);
+		RangeProcessor p = processorMap.get(key);
 		return p == null ? null : p.getTargetCollection();
 	}
 

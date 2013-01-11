@@ -53,12 +53,6 @@ public class RangeBuilder {
 	}
 
 	private Point convertNumericFormat(final String coordinate) {
-		if (!coordinate.endsWith(")")) {
-			throw new IllegalArgumentException(
-					"'"
-							+ coordinate
-							+ "' is not a valid coordinate, does not finish with a closing parenthese");
-		}
 		StringBuilder sb = new StringBuilder(coordinate);
 		dropCharacter(sb); // the '('
 		Point point = new Point();
@@ -71,6 +65,17 @@ public class RangeBuilder {
 		}
 		dropCharacter(sb);
 		convertNumericOrJoker(sb, point.getY());
+		if (sb.charAt(0) != ')') {
+			throw new IllegalArgumentException(
+					"'"
+							+ coordinate
+							+ "' is not a valid coordinate, does not finish with a closing parenthese");
+		}
+		dropCharacter(sb);
+		if (sb.length() > 0) {
+			throw new IllegalArgumentException("'" + coordinate
+					+ "' is not a valid coordinate");
+		}
 		return point;
 	}
 
@@ -84,6 +89,9 @@ public class RangeBuilder {
 	}
 
 	private int convertNumeric(StringBuilder sb) {
+		if (sb.length() == 0) {
+			throw new IllegalArgumentException();
+		}
 		int y = 0;
 		while (sb.length() > 0 && Character.isDigit(sb.charAt(0))) {
 			y = 10 * y + (int) (sb.charAt(0) - '0');
@@ -154,13 +162,23 @@ public class RangeBuilder {
 	}
 
 	private Point convert(final String coordinate) {
-		final Point point;
-		if (isAlphaFormat(coordinate)) {
-			point = convertAlphaFormat(coordinate);
-		} else {
-			point = convertNumericFormat(coordinate);
+		try {
+			final Point point;
+			if (isAlphaFormat(coordinate)) {
+				point = convertAlphaFormat(coordinate);
+			} else {
+				point = convertNumericFormat(coordinate);
+			}
+			return point;
+		} catch (IllegalArgumentException e) {
+			if (e.getMessage() != null) {
+				throw e;
+			} else {
+				throw new IllegalArgumentException(coordinate
+						+ " is invalid coordinate");
+			}
 		}
-		return point;
+
 	}
 
 	private RangeDirection calculateDirection() {

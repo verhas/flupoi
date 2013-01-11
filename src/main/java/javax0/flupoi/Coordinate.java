@@ -18,10 +18,6 @@ class Coordinate {
 		return defined;
 	}
 
-	public void setDefined(boolean defined) {
-		this.defined = defined;
-	}
-
 	public int getRelativity() {
 		return relativity;
 	}

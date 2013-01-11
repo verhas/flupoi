@@ -144,10 +144,18 @@ public interface Workbook {
 	Workbook target(Object key, Class<?> type);
 
 	/**
-	 * Specify that the range previously defined is not to be processed but to
-	 * be skipped.
+	 * Specify to move the last processed point to which a range can be
+	 * specified relative. Note that both movements, horizontal and vertical can
+	 * be positive and negative.
+	 * <p>
+	 * The final position will never be negative.
+	 * 
+	 * @param x
+	 *            the number of cells to move horizontal
+	 * @param y
+	 *            the number of cells to move vertical
 	 */
-	Workbook skip();
+	Workbook skip(int x, int y);
 
 	/**
 	 * Defines a single cell range with a name.
